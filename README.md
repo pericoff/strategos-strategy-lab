@@ -1,7 +1,7 @@
 # STRATEGOS STRATEGY LAB
 **Laboratorio de Dirección Estratégica y Toma de Decisiones — Universidad de Jaén**
 
-Aplicación web independiente para utilizar en docencia los **Temas 2, 3, 4 y 5** de Organización y Dirección de Empresas. Se parte de la infraestructura funcional de STRATEGOS IA, pero el código y el estado de la partida se mantienen aislados. **No conectar al Supabase de STRATEGOS IA ni al de Circular Business Challenge 2.**
+Aplicación web independiente para utilizar en docencia los **Temas 2, 3, 4 y 5** de Organización y Dirección de Empresas. Se parte de la infraestructura funcional de STRATEGOS IA, pero el código y el estado de la partida se mantienen aislados. **Se comparte exclusivamente el proyecto Supabase con STRATEGOS IA, pero las tablas, las funciones y las partidas de Strategy Lab utilizan el prefijo `ssl_*`, sin tocar `cbc_*`.**
 
 ## Estado de la primera versión (noviembre de 2026)
 
@@ -14,6 +14,16 @@ Aplicación web independiente para utilizar en docencia los **Temas 2, 3, 4 y 5*
 - El asesor de IA (`strategos-advisor`) está adaptado para tratar preguntas de estrategia, pero **no estará disponible hasta que se configure un proyecto Supabase nuevo y una Edge Function propia.**
 - El motor económico heredado y la ponderación **80 % simulación / 20 % Canvas** se mantienen provisionalmente. Las fichas estratégicas se revisan de forma formativa y no alteran automáticamente la nota; diseñar un baremo estratégico específico es una fase posterior.
 - **Los enlaces a los cinco vídeos de STRATEGOS IA no se han copiado**; se pueden producir nuevos vídeos específicos de los cuatro temas.
+
+## Coherencia entre objetivos y estrategias: Tema 3 → Tema 4 (implementada)
+
+- En la **ronda 2** cada equipo define **dos objetivos SMART estructurados**: descripción, dimensión (rentabilidad, crecimiento, supervivencia u objetivo socioeconómico), indicador calculado realmente por el simulador, meta numérica, condición mínima/máxima, fecha de cumplimiento (ronda 3 o 4) y justificación de relevancia/viabilidad.
+- Los indicadores disponibles son: cuota de mercado, resultado operativo, tesorería, calidad, circularidad y unidades vendidas. **No se ofrecen Re, RFP ni apalancamiento como indicadores calculados**, porque el motor actual no simula balances ni deuda de forma adecuada para ello.
+- En la **ronda 3** se exige justificar para **cada objetivo** la aportación de la estrategia competitiva y las decisiones de gestión, así como un posible conflicto o renuncia. La elección requiere también evidencias del Tema 2 (DAFO, cinco fuerzas, análisis interno).
+- La interfaz impide enviar decisiones en la ronda 2 si falta la formulación verificable de los objetivos, y en la ronda 3 si faltan los vínculos documentados. **La evaluación semántica de la pertinencia de los objetivos y los argumentos sigue en manos del profesor**; el sistema solo comprueba estructura, cuantificación y longitud.
+- Al publicarse resultados de las rondas 3 y 4, el alumnado ve el valor observado frente a la meta. La puntuación y la nota actuales no se alteran por este indicador. Una meta alcanzada en una ronda anterior al plazo no significa necesariamente cumplimiento sostenido.
+
+**Compatibilidad con partidas anteriores:** una partida que ya pasó la ronda 2 sin objetivos estructurados necesitará una nueva partida de prueba para recorrer el flujo completo; no se fabrican objetivos retrospectivos. **No es necesario ejecutar SQL adicional** porque la información se almacena en el cuaderno JSON ya existente mediante `ssl_save_strategy`.
 
 ## Trazabilidad pedagógica Tema 2 → Tema 4 (implementada)
 
