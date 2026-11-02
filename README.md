@@ -3,6 +3,14 @@
 
 Aplicación web independiente para utilizar en docencia los **Temas 2, 3, 4 y 5** de Organización y Dirección de Empresas. Se parte de la infraestructura funcional de STRATEGOS IA, pero el código y el estado de la partida se mantienen aislados. **Se comparte exclusivamente el proyecto Supabase con STRATEGOS IA, pero las tablas, las funciones y las partidas de Strategy Lab utilizan el prefijo `ssl_*`, sin tocar `cbc_*`.**
 
+## Fase 0: creación de empresa (implementada)
+
+Antes del diagnóstico del **Tema 2**, cada equipo tiene que crear la empresa ficticia que jugará las cuatro rondas. La ficha de identidad contiene: nombre comercial, producto o actividad industrial compatible con el mercado de componentes constructivos, clientes y propuesta inicial de valor. Se guarda mediante `ssl_save_idea` —una RPC histórica reutilizada y aislada del proyecto STRATEGY LAB— en el campo JSON `team.idea`, sin nuevos esquemas ni un Canvas. El profesor ve la identidad y el estado de cada empresa. La ficha puede editarse durante la ronda 1 antes de publicar resultados.
+
+La aplicación orienta al estudiante directamente a la creación de empresa cuando entra por primera vez y bloquea en la interfaz la consulta del diagnóstico y el formulario de decisiones hasta que la ficha esté completada. No se realizan validaciones conceptuales automáticas del contenido: el profesor debe revisar que la idea sea compatible con las reglas y el mercado. La comprobación de entrada es una regla de interfaz; no constituye una regla de autorización adicional en las RPC de entrega.
+
+Este cambio **no requiere ejecutar SQL** y **no modifica STRATEGOS IA**, aunque ambos utilicen el mismo proyecto Supabase con recursos separados.
+
 ## Estado de la primera versión (noviembre de 2026)
 
 **Cambio posterior:** se ha eliminado el Canvas exclusivamente de STRATEGOS STRATEGY LAB. El alumnado entra directamente al Plan estratégico, no necesita completar una propuesta de nueve bloques y la puntuación final usa las cuatro rondas. No se han borrado datos previos del servidor, para preservar partidas históricas y no alterar los otros simuladores.
