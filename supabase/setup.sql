@@ -76,7 +76,7 @@ begin
  select jsonb_agg(
    case when (x->>'id')::int=my_id
       then x
-      else (x-'code'-'decision'-'idea'-'last'-'history'-'canvasGrade') ||
+      else (x-'code'-'decision'-'idea'-'last'-'history'-'canvasGrade'-'strategy') ||
            jsonb_build_object('code','','decision',null,'history','[]'::jsonb,'last',null,
              'canvasGrade', case when x->'canvasGrade'->'scores' is not null
                   then jsonb_build_object('scores',x->'canvasGrade'->'scores')
@@ -189,3 +189,36 @@ grant execute on function public.cbc_save_idea(text,jsonb) to anon,authenticated
 grant execute on function public.cbc_teacher_state() to authenticated;
 grant execute on function public.cbc_teacher_save(jsonb,bigint) to authenticated;
 grant execute on function public.cbc_reset() to authenticated;
+
+-- STRATEGOS STRATEGY LAB · Cuaderno de cuatro rondas, separado por equipo
+-- Esta RPC no permite editar datos de otros equipos ni rondas cerradas.
+create or replace function public.cbc_save_strategy(
+ p_code text, p_round integer, p_entry jsonb
+) returns jsonb language plpgsql security definer set search_path = ''
+as $$
+declare g public.cbc_game%rowtype; n int; t jsonb; old_record jsonb;
+begin
+ if p_round is null or p_round<1 or p_round>4
+    or jsonb_typeof(p_entry)<>'object'
+    or length(p_entry::text)>20000
+    or (select count(*) from jsonb_object_keys(p_entry))>12
+ then raise exception 'Análisis estratégico no válido'; end if;
+ perform 1 from public.cbc_game where id=1 for update;
+ select * into g from public.cbc_game where id=1;
+ if (g.state->>'round')::int<>p_round or g.state->>'phase'<>'decisions'
+ then raise exception 'La ronda está cerrada'; end if;
+ select (x.ordinality-1)::int,x.team into n,t
+ from jsonb_array_elements(g.state->'teams') with ordinality as x(team,ordinality)
+ where upper(x.team->>'code')=upper(trim(coalesce(p_code,'')))
+ and coalesce((x.team->>'active')::boolean,true) limit 1;
+ if n is null then raise exception 'Código de equipo no válido'; end if;
+ old_record:=case when jsonb_typeof(t->'strategy')='object' then t->'strategy'
+   else '{}'::jsonb end;
+ t:=jsonb_set(t,'{strategy}',old_record || jsonb_build_object(p_round::text,p_entry));
+ g.state:=jsonb_set(g.state,array['teams',n::text],t);
+ update public.cbc_game
+ set state=g.state,version=version+1,updated_at=now() where id=1;
+ return jsonb_build_object('ok',true);
+end $$;
+revoke all on function public.cbc_save_strategy(text,integer,jsonb) from public,anon,authenticated;
+grant execute on function public.cbc_save_strategy(text,integer,jsonb) to anon,authenticated;
