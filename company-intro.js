@@ -22,20 +22,16 @@ const CompanyIntro=(()=>{
    (done?'<p class="alert"><b>Empresa creada:</b> '+esc(d.title)+'. Esta identidad se utilizará durante el juego.</p>':'<p class="alert">Primero debéis guardar esta ficha para desbloquear el diagnóstico estratégico de la ronda 1.</p>')+
    (locked?'<p class="muted">Ficha en modo consulta: solo se edita en la primera ronda, antes del cierre.</p>':'')+
    '<form id="company-form">'+fields.map(f=>'<div class="strategy-field"><label for="company-'+f.key+'">'+esc(f.label)+'</label><p class="muted">'+esc(f.hint)+'</p>'+
-    (f.key==='title'?'<input type="text"':'<textarea rows="3"')+' id="company-'+f.key+'" name="'+f.key+'" maxlength="'+f.max+'" '+(locked?'readonly':'required')+'>'+ (f.key==='title'?'':esc(d[f.key]||''))+(f.key==='title'?'>':'</textarea>')+
+    (f.key==='title'
+       ?'<input type="text" id="company-title" name="title" maxlength="90" value="'+esc(d.title||'')+'" '+(locked?'readonly':'required')+'>'
+       :'<textarea rows="3" id="company-'+f.key+'" name="'+f.key+'" maxlength="'+f.max+'" '+(locked?'readonly':'required')+'>'+esc(d[f.key]||'')+'</textarea>')+
     '</div>').join('')+
    (locked?'':'<button type="submit">Guardar empresa y comenzar el diagnóstico</button>')+
    '<p id="company-feedback" aria-live="polite" class="muted"></p></form>'+
    (done?'<button type="button" id="company-continue" class="secondary">Continuar al Plan estratégico (Tema 2 → Tema 5)</button>':'')+
    '</section>';
  }
- // Fix input value separately to preserve all characters escaped and use a single valid tag.
- function render(t,game){
-  const html=view(t,game);
-  const d=data(t);
-  return html.replace(/(<input type="text" id="company-title" name="title" maxlength="90" [^>]*?)><\/div>/,
-   (full,opening)=>opening+' value="'+esc(d.title||'')+'"></div>');
- }
+ function render(t,game){return view(t,game);}
  function bind(code,t,game,refresh){
   const continueButton=document.getElementById('company-continue');
   if(continueButton)continueButton.onclick=()=>refresh('strategy');
