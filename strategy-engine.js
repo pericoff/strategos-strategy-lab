@@ -32,6 +32,54 @@ const StrategyEngine=(()=>{
    return {items,ready:items.every(x=>x.ready),completed:items.filter(x=>x.ready).length};
  }
 
+
+ /* Tema 3 → Tema 4: dos objetivos cuantificables, con indicadores que el
+    motor económico calcula realmente. La pertinencia sigue siendo docente. */
+ const objectiveMetrics={
+  share:{label:'Cuota de mercado (%)',min:0,max:100,key:'share',unit:'%'},
+  operating:{label:'Resultado operativo (€)',min:-1000000,max:2000000,key:'operating',unit:'€'},
+  cash:{label:'Tesorería (€)',min:-1000000,max:2000000,key:'cash',unit:'€'},
+  quality:{label:'Calidad (0–100)',min:0,max:100,key:'quality',unit:'/100'},
+  circular:{label:'Circularidad (0–100)',min:0,max:100,key:'circular',unit:'/100'},
+  sales:{label:'Unidades vendidas',min:0,max:50000,key:'sales',unit:'ud.'}
+ };
+ const objectiveKinds={
+  profitability:'Rentabilidad',
+  growth:'Crecimiento',
+  survival:'Supervivencia',
+  socioeconomic:'Objetivo socioeconómico'
+ };
+ function objectivesStatus(t){
+  const second=t?.strategy?.['2']||{},third=t?.strategy?.['3']||{};
+  const goals=Array.isArray(second.smartObjectives)?second.smartObjectives:[];
+  const links=Array.isArray(third.objectiveLinks)?third.objectiveLinks:[];
+  const items=[0,1].map(i=>{
+    const g=goals[i]||{},link=links[i]||{},metric=objectiveMetrics[g.metric];
+    const target=Number(g.target),deadline=Number(g.deadline);
+    const defined=!!metric && !!objectiveKinds[g.kind] && String(g.title||'').trim().length>=25 &&
+      String(g.relevance||'').trim().length>=40 &&
+      g.target!=='' && g.target!==null && g.target!==undefined &&
+      Number.isFinite(target)&&target>=metric.min&&target<=metric.max &&
+      (g.direction==='atLeast'||g.direction==='atMost') && [3,4].includes(deadline);
+    const linked=defined && String(link.action||'').trim().length>=50 &&
+      String(link.tradeoff||'').trim().length>=35;
+    return {index:i,goal:g,link,defined,linked,metric:metric||null};
+  });
+  return {items,defined:items.every(x=>x.defined),linked:items.every(x=>x.linked),
+    definedCount:items.filter(x=>x.defined).length,linkedCount:items.filter(x=>x.linked).length};
+ }
+ function objectiveProgress(t,r){
+  const goals=objectivesStatus(t).items,round=Number(r);
+  const history=Array.isArray(t?.history)?t.history:[];
+  const row=history.find(x=>Number(x.round)===round) || (round===4?t?.last:null);
+  return goals.map(x=>{
+    if(!x.defined||!row||!Number.isFinite(Number(row[x.metric.key])))
+      return {...x,observed:null,met:null};
+    const observed=Number(row[x.metric.key]),target=Number(x.goal.target);
+    return {...x,observed,met:x.goal.direction==='atLeast'?observed>=target:observed<=target};
+  });
+ }
+
  function factors(t,d,p,round){
   const strategy=choice(t,round);
   const baseline={strategy:null,label:'Sin estrategia declarada',variable:p.variable,attraction:1,marketCeiling:1,coherence:null,message:'No se ha registrado una estrategia competitiva válida.'};
@@ -62,5 +110,5 @@ const StrategyEngine=(()=>{
   }
   return {strategy,label:names[strategy],variable,attraction,marketCeiling,coherence:+(100*coherence).toFixed(1),message:reason};
  }
- return {choice,factors,names,evidenceDefinitions,evidenceStatus};
+ return {choice,factors,names,evidenceDefinitions,evidenceStatus,objectiveMetrics,objectiveKinds,objectivesStatus,objectiveProgress};
 })();
