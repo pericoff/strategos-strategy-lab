@@ -10,6 +10,28 @@ const StrategyEngine=(()=>{
   const c=t?.strategy?.['3']?.competitiveChoice;
   return allowed.includes(c)?c:null;
  }
+ 
+ /* Conexión formativa Tema 2 → Tema 4. Se reutilizan únicamente evidencias
+    redactadas por el equipo en la ronda 1, sin análisis semántico automático. */
+ const evidenceDefinitions=[
+   {key:'swot',label:'DAFO · Oportunidad o amenaza',source:'swot',question:'¿Qué oportunidad o amenaza concreta del DAFO explica la elección de esta estrategia?'},
+   {key:'forces',label:'Cinco fuerzas · Presión competitiva',source:'forces',question:'¿Qué fuerza competitiva condiciona el posicionamiento elegido?'},
+   {key:'internal',label:'Cadena de valor o capacidad distintiva',source:'internal',question:'¿Qué capacidad o actividad interna permite sostener la estrategia?'}
+ ];
+ function evidenceStatus(t){
+   const first=t?.strategy?.['1']||{},third=t?.strategy?.['3']||{},links=third.evidenceLinks||{};
+   const items=evidenceDefinitions.map(spec=>{
+     const source=String(first[spec.source]||'').trim(),citation=String(links[spec.key]?.citation||'').trim(),
+       reasoning=String(links[spec.key]?.reasoning||'').trim();
+     const sourceExists=source.length>=30;
+     const traceable=sourceExists && citation.length>=15 &&
+       source.toLocaleLowerCase('es').includes(citation.toLocaleLowerCase('es'));
+     return {...spec,sourceExists,traceable,reasoned:reasoning.length>=40,
+       ready:traceable&&reasoning.length>=40};
+   });
+   return {items,ready:items.every(x=>x.ready),completed:items.filter(x=>x.ready).length};
+ }
+
  function factors(t,d,p,round){
   const strategy=choice(t,round);
   const baseline={strategy:null,label:'Sin estrategia declarada',variable:p.variable,attraction:1,marketCeiling:1,coherence:null,message:'No se ha registrado una estrategia competitiva válida.'};
@@ -40,5 +62,5 @@ const StrategyEngine=(()=>{
   }
   return {strategy,label:names[strategy],variable,attraction,marketCeiling,coherence:+(100*coherence).toFixed(1),message:reason};
  }
- return {choice,factors,names};
+ return {choice,factors,names,evidenceDefinitions,evidenceStatus};
 })();
