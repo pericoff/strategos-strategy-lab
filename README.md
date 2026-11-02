@@ -26,15 +26,33 @@ Aplicación web independiente para utilizar en docencia los **Temas 2, 3, 4 y 5*
 
 **Nota curricular:** el Tema 5 incluye árboles de decisión basados en riesgo y probabilidad; la primera versión ofrece el comparador de incertidumbre y ejemplos ponderados. La herramienta gráfica de construcción de árboles queda pendiente. Tampoco se ha implantado todavía cálculo explícito de Re, RFP o apalancamiento dentro del motor económico.
 
-## Activación independiente: pasos necesarios
+## Activación SIN un nuevo proyecto Supabase (opción para el plan gratuito)
 
-1. Entra en [Supabase](https://supabase.com/dashboard/projects) y **crea un proyecto NUEVO** para STRATEGOS STRATEGY LAB. No uses los datos ni las claves de STRATEGOS IA.
-2. Ejecuta **[supabase/setup.sql](supabase/setup.sql)** una vez en el SQL Editor de ese proyecto nuevo. Crea la partida, tablas, roles de profesor, códigos de equipos y funciones de guardado del cuaderno estratégico. Importante: **el archivo `setup.sql` de este repositorio es distinto del de STRATEGOS IA**.
-3. En **Authentication → Users**, crea el usuario docente indicado en `supabase/setup.sql` (actualmente `pnunez@ujaen.es`) y define una contraseña propia para este proyecto.
-4. En el nuevo Supabase, copia la **Project URL** y la clave pública **Publishable Key**. Edita `sync.js` y sustituye `const base='';` y `const key='';`. **No pegues claves privadas ni claves service_role en GitHub**.
-5. En GitHub Settings → Pages selecciona **Deploy from a branch → main → /(root)**.
-6. Comprueba el acceso docente, los códigos, el guardado de los análisis por equipo, los cálculos y una ronda completa con datos ficticios.
-7. Opcional: despliega `supabase/functions/strategos-advisor/index.ts` en **Edge Functions**, configura el secreto `OPENAI_API_KEY` directamente en el nuevo Supabase y adapta/valida las autorizaciones. No publiques este secreto en GitHub. La facturación del proveedor es independiente.
+STRATEGOS STRATEGY LAB puede compartir el **mismo proyecto Supabase** que STRATEGOS IA, pero **no las mismas tablas, funciones ni partidas**. Los nombres se diferencian de forma estricta:
+
+| Uso | STRATEGOS IA existente | STRATEGOS STRATEGY LAB |
+|---|---|---|
+| Partida | `public.cbc_game` | `public.ssl_game` |
+| Profesor autorizado | `public.cbc_teachers` | `public.ssl_teachers` |
+| Funciones RPC | `cbc_*` | `ssl_*` |
+| Función de IA | `strategos-advisor` | `strategy-lab-advisor` |
+| Acceso del alumnado | códigos propios | códigos nuevos |
+| Usuario de profesor | cuenta Supabase existente | puede usar la misma cuenta Auth |
+
+**Pasos:**
+
+1. Abre el **mismo proyecto Supabase que ya utilizas para STRATEGOS IA**.
+2. En **SQL Editor → New query**, pega y ejecuta **únicamente [supabase/setup.sql](supabase/setup.sql) DE ESTE REPOSITORIO**. Se crean recursos `ssl_*` y códigos propios de equipos. **Nunca ejecutes el setup.sql de STRATEGOS IA para activar Strategy Lab**, porque actuaría sobre `cbc_*`.
+3. Comprueba en **Table Editor** que existan **ambas** tablas `cbc_game` (original, intacta) y `ssl_game` (nueva).
+4. El archivo `sync.js` de Strategy Lab ya está configurado con **la URL y la clave pública del Supabase compartido**. Solo se permite llamar a RPC `ssl_*` desde esta instancia.
+5. El profesor puede usar la misma dirección de correo y contraseña de Supabase Auth, si el correo aparece en `ssl_teachers`. La sesión del navegador tiene nombre separado.
+6. En GitHub abre **Settings → Pages → Deploy from a branch → main → /(root)**.
+7. Comprueba que la simulación nueva genera sus propios códigos, guarda análisis en las cuatro rondas y no altera la original.
+8. Para activar el asesor generativo, despliega una **segunda Edge Function** llamada `strategy-lab-advisor` usando [supabase/functions/strategy-lab-advisor/index.ts](supabase/functions/strategy-lab-advisor/index.ts). **No sobrescribas `strategos-advisor`**, que sigue atendiendo la simulación original. La nueva función utiliza `ssl_student_state`. El mismo secreto `OPENAI_API_KEY` del proyecto puede ser accesible para ambas funciones, pero el consumo de API será compartido y debes vigilar el presupuesto.
+
+**Advertencia:** los archivos SQL adicionales heredados en `supabase/` (`acortar-codigos.sql`, `reparar-guardado.sql`, `privacidad-evaluacion-canvas.sql`) no están adaptados al prefijo `ssl_`. **No los ejecutes** en el proyecto compartido: podrían modificar la aplicación original. Solo el `setup.sql` actual está preparado para instalar el laboratorio sin interferir.
+
+**Límites:** el proyecto compartido suma los límites de almacenamiento, tráfico, Edge Functions y consumo de recursos de ambas aplicaciones. Esta separación es lógica, no equivale a aislamiento completo de infraestructura ni a disponer de cuotas independientes.
 
 ## Enlaces previstos cuando GitHub Pages esté activo
 
