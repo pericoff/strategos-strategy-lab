@@ -5,14 +5,17 @@ Aplicación web independiente para utilizar en docencia los **Temas 2, 3, 4 y 5*
 
 ## Estado de la primera versión (noviembre de 2026)
 
-- Base HTML del alumnado y profesor, lógica económica de cuatro rondas y evaluación Canvas del simulador original, en repositorio propio.
+**Cambio posterior:** se ha eliminado el Canvas exclusivamente de STRATEGOS STRATEGY LAB. El alumnado entra directamente al Plan estratégico, no necesita completar una propuesta de nueve bloques y la puntuación final usa las cuatro rondas. No se han borrado datos previos del servidor, para preservar partidas históricas y no alterar los otros simuladores.
+
+
+- Base HTML del alumnado y profesor, lógica económica de cuatro rondas sin Canvas y con evaluación por media de rondas, en repositorio propio.
 - Nuevo **cuaderno estratégico** (`strategy-lab.js`), organizado por tema y ronda; seis campos orientados al análisis aplicado por ronda.
 - Persistencia independiente por equipo y ronda: RPC `cbc_save_strategy` incluida en `supabase/setup.sql`, autorizada mediante código del equipo, sin editar rondas cerradas.
 - Vista de revisión docente de los análisis estratégicos. La RPC `cbc_student_state` oculta los análisis de los demás equipos.
 - Calculadora de factores ponderados y comparador de criterios de incertidumbre (Laplace, optimista, Wald, Hurwicz y Savage), con resultados deterministas.
 - Guion de cuatro rondas y manual de alumnado alineados con los temas 2–5.
 - El asesor de IA (`strategos-advisor`) está adaptado para tratar preguntas de estrategia, pero **no estará disponible hasta que se configure un proyecto Supabase nuevo y una Edge Function propia.**
-- El motor económico heredado y la ponderación **80 % simulación / 20 % Canvas** se mantienen provisionalmente. Las fichas estratégicas se revisan de forma formativa y no alteran automáticamente la nota; diseñar un baremo estratégico específico es una fase posterior.
+- El Canvas ha sido eliminado de las pantallas, del requisito de entrega y de la clasificación. **La puntuación final es el promedio de las cuatro rondas (100 % simulación)**. Los análisis del cuaderno estratégico se revisan de forma formativa; una posible rúbrica docente independiente se diseñaría por separado.
 - **Los enlaces a los cinco vídeos de STRATEGOS IA no se han copiado**; se pueden producir nuevos vídeos específicos de los cuatro temas.
 
 ## Coherencia entre objetivos y estrategias: Tema 3 → Tema 4 (implementada)
