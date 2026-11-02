@@ -20,13 +20,13 @@ const CBCSync = (() => {
  async function rpc(name, params={}, retried=false){
    // Ningún acceso del laboratorio puede usar las RPC cbc_* de STRATEGOS IA.
    if(!/^cbc_[a-z_]+$/.test(name))throw Error('Nombre RPC no permitido');
-   name='ssl_'+name.slice(4);
+   const wireName='ssl_'+name.slice(4);
    checkSetup();
    const headers={'apikey':key,'Content-Type':'application/json'};
    if(currentToken())headers.Authorization='Bearer '+currentToken();
    // Sin sesión, Supabase resuelve el rol anon mediante la cabecera apikey.
    let response;
-   try{response=await fetch(base+'/rest/v1/rpc/'+name,{
+   try{response=await fetch(base+'/rest/v1/rpc/'+wireName,{
       method:'POST',headers,body:JSON.stringify(params),cache:'no-store'
    });}catch{throw Error('Sin conexión a Supabase. Comprueba Internet.');}
    const data=await response.json().catch(()=>({}));
