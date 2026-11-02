@@ -15,6 +15,18 @@ Aplicación web independiente para utilizar en docencia los **Temas 2, 3, 4 y 5*
 - El motor económico heredado y la ponderación **80 % simulación / 20 % Canvas** se mantienen provisionalmente. Las fichas estratégicas se revisan de forma formativa y no alteran automáticamente la nota; diseñar un baremo estratégico específico es una fase posterior.
 - **Los enlaces a los cinco vídeos de STRATEGOS IA no se han copiado**; se pueden producir nuevos vídeos específicos de los cuatro temas.
 
+## Trazabilidad pedagógica Tema 2 → Tema 4 (implementada)
+
+La **ronda 3** integra ahora el diagnóstico de la **ronda 1** con la formulación de la estrategia competitiva:
+
+1. El equipo elige liderazgo en costes, diferenciación o enfoque.
+2. Cita fragmentos **literales** previamente guardados en su ronda 1, procedentes del **DAFO**, las **cinco fuerzas competitivas** y el **análisis interno de cadena de valor y capacidades distintivas**.
+3. Redacta una justificación propia (mínimo 40 caracteres por vínculo), conectando cada evidencia con su estrategia.
+4. El formulario verifica que las citas están efectivamente contenidas en el diagnóstico anterior y que las tres justificaciones están presentes. El apartado **Decisiones** de la ronda 3 permanece bloqueado en la interfaz hasta que el plan esté guardado y los vínculos sean verificables.
+5. El profesor consulta las tres referencias junto con las justificaciones y valora su pertinencia académica. **La comprobación de trazabilidad textual no es evaluación semántica ni garantiza la calidad del razonamiento.**
+
+**Atención para partidas en curso:** si un equipo no guardó en la ronda 1 su DAFO, cinco fuerzas o análisis interno, no podrá inventar después una cita histórica. Para pruebas, utiliza una partida nueva completando primero el Tema 2, o consulta con el profesor una excepción didáctica. El bloqueo forma parte de la interfaz y no es una autorización adicional de seguridad en el backend; el profesor debe supervisar las entregas. Este cambio no requiere migración SQL ni altera el modelo de calificación.
+
 ## Motor competitivo del Tema 4 (implementado)
 
 Desde la **ronda 3** cada equipo debe escoger y justificar una de las siguientes estrategias en **Plan estratégico** antes de enviar decisiones. La elección se mantiene para las rondas 3 y 4.
