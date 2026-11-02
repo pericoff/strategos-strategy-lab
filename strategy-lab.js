@@ -46,6 +46,34 @@ const StrategyLab=(()=>{
       ]}
   ];
   const roundName=r=>topics[Math.max(0,Math.min(3,Number(r)-1))];
+
+  function evidenceOptions(source,current){
+    const text=String(source||'').trim();
+    const segments=text.split(/(?<=[.!?])\s+|\n+/).map(x=>x.trim()).filter(x=>x.length>=15);
+    if(!segments.length&&text.length>=15)segments.push(text);
+    if(text.length>=15&&!segments.includes(text))segments.unshift(text);
+    if(current&&!segments.includes(current))segments.push(current);
+    return segments.slice(0,30).map(x=>'<option value="'+safe(x)+'"'+(current===x?' selected':'')+'>'+safe(x.length>130?x.slice(0,130)+'…':x)+'</option>').join('');
+  }
+  function evidencePanel(team,entry,readOnly){
+    const earlier=team?.strategy?.['1']||{},linked=entry?.evidenceLinks||{};
+    const status=StrategyEngine.evidenceStatus({...team,strategy:{...(team?.strategy||{}),'3':entry||{}}});
+    return '<section class="strategy-evidence"><h3>Conexión del Tema 2 con el Tema 4</h3>'+
+      '<p>Selecciona un fragmento literal del DAFO, las cinco fuerzas y el análisis interno de la primera ronda. Explica cómo cada evidencia respalda la estrategia elegida. El profesor revisará la calidad del razonamiento.</p>'+
+      '<p class="muted">Referencias justificadas: '+status.completed+'/3.</p>'+
+      StrategyEngine.evidenceDefinitions.map(spec=>{
+        const source=String(earlier[spec.source]||'').trim(),link=linked[spec.key]||{};
+        return '<div class="strategy-field"><h4>'+safe(spec.label)+'</h4>'+
+          '<p class="muted">'+safe(spec.question)+'</p>'+
+          (source.length>=30?
+           '<details><summary>Consultar mi diagnóstico del Tema 2</summary><p class="strategy-source">'+safe(source)+'</p></details>'+
+           '<label for="evidence-cite-'+spec.key+'">Fragmento de la ronda 1</label>'+
+           '<select id="evidence-cite-'+spec.key+'" name="evidence_cite_'+spec.key+'"'+(readOnly?' disabled':'')+'><option value="">Seleccionar un fragmento…</option>'+evidenceOptions(source,String(link.citation||''))+'</select>'
+           :'<p class="alert">No hay un diagnóstico previo en la ronda 1. Consulta al profesor; no se fabricará una referencia histórica.</p>')+
+          '<label for="evidence-reason-'+spec.key+'">Justificación estratégica</label>'+
+          '<textarea id="evidence-reason-'+spec.key+'" name="evidence_reason_'+spec.key+'" rows="3" maxlength="1100"'+(readOnly?' readonly':'')+'>'+safe(link.reasoning||'')+'</textarea></div>';
+       }).join('')+'</section>';
+  }
   function fieldset(topic,entry,readOnly,round){
     return (Number(round)===3?'<div class="strategy-field"><label for="strategy-competitiveChoice">Estrategia competitiva que aplicará la empresa</label><p class="muted">Selecciona una de las tres estrategias del Tema 4. La elección se utilizará en el motor de mercado de esta ronda y de la ronda 4. Debes justificarla en los apartados siguientes.</p><select id="strategy-competitiveChoice" name="competitiveChoice" required '+(readOnly?'disabled':'')+'><option value="">Seleccionar estrategia…</option>'+Object.entries(StrategyEngine.names).map(([k,v])=>'<option value="'+k+'"'+(entry?.competitiveChoice===k?' selected':'')+'>'+safe(v)+'</option>').join('')+'</select></div>':'')+topic.fields.map(([key,title,tip])=>
       '<div class="strategy-field"><label for="strategy-'+safe(key)+'">'+safe(title)+'</label>'+
@@ -58,7 +86,7 @@ const StrategyLab=(()=>{
      '<h2>Ronda '+r+' · '+safe(topic.title)+'</h2><p>'+safe(topic.purpose)+'</p>'+
      '<p class="muted">Avance: '+done+'/'+topic.fields.length+' apartados desarrollados. Las preguntas exigen justificar y aplicar los conceptos, no copiar definiciones.</p>'+
      (locked?'<p class="alert">Esta ronda está cerrada; puedes consultar tus respuestas, pero no modificarlas hasta la próxima ronda.</p>':'')+
-     '<form id="strategy-form">'+fieldset(topic,entry,locked,r)+
+     '<form id="strategy-form">'+fieldset(topic,entry,locked,r)+(r===3?evidencePanel(team,entry,locked):'')+
      (locked?'':'<button type="submit">Guardar mi análisis estratégico</button>')+
      '<p id="strategy-save-feedback" aria-live="polite" class="muted"></p></form>'+
      '<div class="strategy-methods"><h3>Herramientas de decisión</h3><p class="muted">Utiliza las calculadoras para comprobar alternativas. Los resultados no sustituyen tu justificación.</p>'+
@@ -84,7 +112,14 @@ const StrategyLab=(()=>{
       form.onsubmit=async e=>{
        e.preventDefault();
        const button=form.querySelector('button[type="submit"]'),status=document.getElementById('strategy-save-feedback');
-       const input=new FormData(form);const entry=Object.fromEntries(roundName(game.round).fields.map(([k])=>[k,String(input.get(k)||'').trim()]));if(Number(game.round)===3){entry.competitiveChoice=String(input.get('competitiveChoice')||'');if(!StrategyEngine.names[entry.competitiveChoice]){status.textContent='Selecciona una estrategia competitiva válida.';return;}}
+       const input=new FormData(form);const entry=Object.fromEntries(roundName(game.round).fields.map(([k])=>[k,String(input.get(k)||'').trim()]));if(Number(game.round)===3){entry.competitiveChoice=String(input.get('competitiveChoice')||'');if(!StrategyEngine.names[entry.competitiveChoice]){status.textContent='Selecciona una estrategia competitiva válida.';return;}
+       entry.evidenceLinks=Object.fromEntries(StrategyEngine.evidenceDefinitions.map(spec=>[spec.key,{
+         citation:String(input.get('evidence_cite_'+spec.key)||'').trim(),
+         reasoning:String(input.get('evidence_reason_'+spec.key)||'').trim()
+       }]));
+       const audit=StrategyEngine.evidenceStatus({...team,strategy:{...(team.strategy||{}),'3':entry}});
+       if(!audit.ready){status.textContent='Completa tres vínculos trazables con el Tema 2 y justifica cada uno con al menos 40 caracteres.';return;}
+       }
        button.disabled=true;status.textContent='Guardando en Supabase…';
        try{await CBCSync.rpc('cbc_save_strategy',{p_code:code,p_round:Number(game.round),p_entry:entry});
          team.strategy=team.strategy||{};team.strategy[String(game.round)]=entry;
@@ -102,7 +137,13 @@ const StrategyLab=(()=>{
     if(!selector||!round||!host)return;
     const render=()=>{
       const t=teams.find(x=>String(x.id)===selector.value),r=Number(round.value),topic=roundName(r),entry=t?.strategy?.[String(r)]||{};
-      host.innerHTML='<h3>'+safe(t?.name||'')+' · Ronda '+r+'</h3>'+(r===3?'<p><b>Estrategia declarada:</b> '+safe(StrategyEngine.names[entry.competitiveChoice]||'Sin seleccionar')+'</p>':'')+
+      host.innerHTML='<h3>'+safe(t?.name||'')+' · Ronda '+r+'</h3>'+(r===3?'<p><b>Estrategia declarada:</b> '+safe(StrategyEngine.names[entry.competitiveChoice]||'Sin seleccionar')+'</p>'+StrategyEngine.evidenceStatus(t||{}).items.map(item=>{
+       const link=entry.evidenceLinks?.[item.key]||{};
+       return '<div class="strategy-reviewed"><strong>'+safe(item.label)+'</strong>'+
+       '<p>Trazabilidad: '+(item.ready?'referencia localizada y justificada':'incompleta')+'</p>'+
+       '<p><b>Cita Tema 2:</b> '+safe(link.citation||'Sin referencia')+'</p>'+
+       '<p><b>Justificación:</b> '+safe(link.reasoning||'Sin justificar')+'</p></div>';
+     }).join(''):'')+
        topic.fields.map(([key,label])=>'<div class="strategy-reviewed"><strong>'+safe(label)+'</strong><p>'+safe(entry[key]||'Sin entregar')+'</p></div>').join('');
     };
     selector.onchange=render;round.onchange=render;render();
