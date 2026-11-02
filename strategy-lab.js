@@ -46,8 +46,8 @@ const StrategyLab=(()=>{
       ]}
   ];
   const roundName=r=>topics[Math.max(0,Math.min(3,Number(r)-1))];
-  function fieldset(topic,entry,readOnly){
-    return topic.fields.map(([key,title,tip])=>
+  function fieldset(topic,entry,readOnly,round){
+    return (Number(round)===3?'<div class="strategy-field"><label for="strategy-competitiveChoice">Estrategia competitiva que aplicará la empresa</label><p class="muted">Selecciona una de las tres estrategias del Tema 4. La elección se utilizará en el motor de mercado de esta ronda y de la ronda 4. Debes justificarla en los apartados siguientes.</p><select id="strategy-competitiveChoice" name="competitiveChoice" required '+(readOnly?'disabled':'')+'><option value="">Seleccionar estrategia…</option>'+Object.entries(StrategyEngine.names).map(([k,v])=>'<option value="'+k+'"'+(entry?.competitiveChoice===k?' selected':'')+'>'+safe(v)+'</option>').join('')+'</select></div>':'')+topic.fields.map(([key,title,tip])=>
       '<div class="strategy-field"><label for="strategy-'+safe(key)+'">'+safe(title)+'</label>'+
       '<p class="muted">'+safe(tip)+'</p><textarea id="strategy-'+safe(key)+'" name="'+safe(key)+'" rows="4" maxlength="1800"'+(readOnly?' readonly':'')+'>'+safe(entry?.[key]||'')+'</textarea></div>').join('');
   }
@@ -58,7 +58,7 @@ const StrategyLab=(()=>{
      '<h2>Ronda '+r+' · '+safe(topic.title)+'</h2><p>'+safe(topic.purpose)+'</p>'+
      '<p class="muted">Avance: '+done+'/'+topic.fields.length+' apartados desarrollados. Las preguntas exigen justificar y aplicar los conceptos, no copiar definiciones.</p>'+
      (locked?'<p class="alert">Esta ronda está cerrada; puedes consultar tus respuestas, pero no modificarlas hasta la próxima ronda.</p>':'')+
-     '<form id="strategy-form">'+fieldset(topic,entry,locked)+
+     '<form id="strategy-form">'+fieldset(topic,entry,locked,r)+
      (locked?'':'<button type="submit">Guardar mi análisis estratégico</button>')+
      '<p id="strategy-save-feedback" aria-live="polite" class="muted"></p></form>'+
      '<div class="strategy-methods"><h3>Herramientas de decisión</h3><p class="muted">Utiliza las calculadoras para comprobar alternativas. Los resultados no sustituyen tu justificación.</p>'+
@@ -84,7 +84,7 @@ const StrategyLab=(()=>{
       form.onsubmit=async e=>{
        e.preventDefault();
        const button=form.querySelector('button[type="submit"]'),status=document.getElementById('strategy-save-feedback');
-       const entry=Object.fromEntries(roundName(game.round).fields.map(([k])=>[k,String(new FormData(form).get(k)||'').trim()]));
+       const input=new FormData(form);const entry=Object.fromEntries(roundName(game.round).fields.map(([k])=>[k,String(input.get(k)||'').trim()]));if(Number(game.round)===3){entry.competitiveChoice=String(input.get('competitiveChoice')||'');if(!StrategyEngine.names[entry.competitiveChoice]){status.textContent='Selecciona una estrategia competitiva válida.';return;}}
        button.disabled=true;status.textContent='Guardando en Supabase…';
        try{await CBCSync.rpc('cbc_save_strategy',{p_code:code,p_round:Number(game.round),p_entry:entry});
          team.strategy=team.strategy||{};team.strategy[String(game.round)]=entry;
@@ -102,7 +102,7 @@ const StrategyLab=(()=>{
     if(!selector||!round||!host)return;
     const render=()=>{
       const t=teams.find(x=>String(x.id)===selector.value),r=Number(round.value),topic=roundName(r),entry=t?.strategy?.[String(r)]||{};
-      host.innerHTML='<h3>'+safe(t?.name||'')+' · Ronda '+r+'</h3>'+
+      host.innerHTML='<h3>'+safe(t?.name||'')+' · Ronda '+r+'</h3>'+(r===3?'<p><b>Estrategia declarada:</b> '+safe(StrategyEngine.names[entry.competitiveChoice]||'Sin seleccionar')+'</p>':'')+
        topic.fields.map(([key,label])=>'<div class="strategy-reviewed"><strong>'+safe(label)+'</strong><p>'+safe(entry[key]||'Sin entregar')+'</p></div>').join('');
     };
     selector.onchange=render;round.onchange=render;render();
