@@ -8,7 +8,7 @@ const StrategosAdvisor=(()=>{
   const fmt=v=>new Intl.NumberFormat('es-ES',{maximumFractionDigits:1}).format(num(v));
   function observations(t){
     const history=Array.isArray(t?.history)?t.history:[];
-    if(!history.length)return ['Todavía no hay rondas publicadas para tu empresa. Revisa el Canvas, el presupuesto de inversión y los objetivos estratégicos antes de decidir.','Las recomendaciones se basarán en los resultados de tu equipo cuando el profesor publique la primera ronda.'];
+    if(!history.length)return ['Todavía no hay rondas publicadas para tu empresa. Revisa tu diagnóstico, los objetivos SMART y el presupuesto de inversión antes de decidir.','Las recomendaciones se basarán en los resultados de tu equipo cuando el profesor publique la primera ronda.'];
     const last=history[history.length-1],prev=history[history.length-2],out=[];
     const cash=num(t.cash),profit=num(last.operating),sales=num(last.sales),share=num(last.share),capacity=num(t.capacity);
     if(profit<0)out.push('La última ronda registró un resultado operativo negativo ('+eur(profit)+'). Revisa margen, costes y volumen antes de aumentar la inversión.');
