@@ -74,6 +74,49 @@ const StrategyLab=(()=>{
           '<textarea id="evidence-reason-'+spec.key+'" name="evidence_reason_'+spec.key+'" rows="3" maxlength="1100"'+(readOnly?' readonly':'')+'>'+safe(link.reasoning||'')+'</textarea></div>';
        }).join('')+'</section>';
   }
+
+  function objectivesPanel(entry,readOnly){
+    const goals=Array.isArray(entry?.smartObjectives)?entry.smartObjectives:[];
+    return '<section class="strategy-objectives"><h3>Objetivos SMART medibles · Tema 3</h3>'+
+      '<p>Define dos objetivos específicos, medibles, alcanzables, relevantes y con plazo. Sus indicadores se contrastarán con resultados reales del simulador. Rentabilidad económica (Re), financiera (RFP) y apalancamiento siguen en los apuntes teóricos, pero no están calculados por el motor actual.</p>'+
+      [0,1].map(i=>{
+        const g=goals[i]||{};
+        return '<div class="strategy-field"><h4>Objetivo '+(i+1)+'</h4>'+
+          '<label>Formulación específica</label><textarea name="objective_title_'+i+'" maxlength="240" rows="2"'+(readOnly?' readonly':'')+'>'+safe(g.title||'')+'</textarea>'+
+          '<label>Dimensión del objetivo</label><select name="objective_kind_'+i+'"'+(readOnly?' disabled':'')+'>'+
+          '<option value="">Seleccionar…</option>'+Object.entries(StrategyEngine.objectiveKinds).map(([k,v])=>
+            '<option value="'+k+'"'+(g.kind===k?' selected':'')+'>'+safe(v)+'</option>').join('')+'</select>'+
+          '<label>Indicador verificable</label><select name="objective_metric_'+i+'"'+(readOnly?' disabled':'')+'>'+
+          '<option value="">Seleccionar…</option>'+Object.entries(StrategyEngine.objectiveMetrics).map(([k,v])=>
+            '<option value="'+k+'"'+(g.metric===k?' selected':'')+'>'+safe(v.label)+'</option>').join('')+'</select>'+
+          '<label>Condición a alcanzar</label><select name="objective_direction_'+i+'"'+(readOnly?' disabled':'')+'>'+
+          '<option value="atLeast"'+(g.direction==='atLeast'?' selected':'')+'>Alcanzar al menos</option>'+
+          '<option value="atMost"'+(g.direction==='atMost'?' selected':'')+'>No superar</option></select>'+
+          '<label>Valor objetivo</label><input type="number" step="any" name="objective_target_'+i+'" value="'+safe(g.target??'')+'"'+(readOnly?' readonly':'')+'>'+
+          '<label>Plazo de cumplimiento</label><select name="objective_deadline_'+i+'"'+(readOnly?' disabled':'')+'>'+
+          '<option value="3"'+(Number(g.deadline)===3?' selected':'')+'>Hasta la ronda 3</option>'+
+          '<option value="4"'+(Number(g.deadline)===4?' selected':'')+'>Hasta la ronda 4</option></select>'+
+          '<label>Relevancia y viabilidad</label><textarea name="objective_relevance_'+i+'" rows="3" maxlength="900"'+(readOnly?' readonly':'')+'>'+safe(g.relevance||'')+'</textarea>'+
+          '</div>';
+      }).join('')+'</section>';
+  }
+  function objectiveLinksPanel(team,entry,readOnly){
+    const goals=StrategyEngine.objectivesStatus(team).items,links=Array.isArray(entry?.objectiveLinks)?entry.objectiveLinks:[];
+    return '<section class="strategy-objectives"><h3>Coherencia Tema 3 → Tema 4</h3>'+
+      '<p>Explica cómo la estrategia competitiva y las decisiones de precio, producción e inversión contribuirán a los dos objetivos SMART de la ronda 2. También debes identificar un posible conflicto entre objetivos y recursos.</p>'+
+      goals.map((item,i)=>{
+        const g=item.goal,link=links[i]||{};
+        return '<div class="strategy-field"><h4>Objetivo '+(i+1)+'</h4>'+
+          (item.defined?'<p><b>'+safe(g.title)+'</b></p>'+
+             '<p class="muted">'+safe(StrategyEngine.objectiveMetrics[g.metric]?.label||'')+
+             ' · '+(g.direction==='atMost'?'No superar ':'Alcanzar al menos ')+safe(g.target)+' · Plazo: ronda '+safe(g.deadline)+'</p>':
+             '<p class="alert">Este objetivo no está definido de forma verificable en la ronda 2. Consulta al profesor; no es posible inventar un objetivo anterior.</p>')+
+          '<label>Acciones concretas de la estrategia que contribuirán al objetivo</label>'+
+          '<textarea name="objective_action_'+i+'" rows="3" maxlength="1100"'+(readOnly?' readonly':'')+'>'+safe(link.action||'')+'</textarea>'+
+          '<label>Riesgo, conflicto o renuncia que hay que gestionar</label>'+
+          '<textarea name="objective_tradeoff_'+i+'" rows="3" maxlength="1100"'+(readOnly?' readonly':'')+'>'+safe(link.tradeoff||'')+'</textarea></div>';
+      }).join('')+'</section>';
+  }
   function fieldset(topic,entry,readOnly,round){
     return (Number(round)===3?'<div class="strategy-field"><label for="strategy-competitiveChoice">Estrategia competitiva que aplicará la empresa</label><p class="muted">Selecciona una de las tres estrategias del Tema 4. La elección se utilizará en el motor de mercado de esta ronda y de la ronda 4. Debes justificarla en los apartados siguientes.</p><select id="strategy-competitiveChoice" name="competitiveChoice" required '+(readOnly?'disabled':'')+'><option value="">Seleccionar estrategia…</option>'+Object.entries(StrategyEngine.names).map(([k,v])=>'<option value="'+k+'"'+(entry?.competitiveChoice===k?' selected':'')+'>'+safe(v)+'</option>').join('')+'</select></div>':'')+topic.fields.map(([key,title,tip])=>
       '<div class="strategy-field"><label for="strategy-'+safe(key)+'">'+safe(title)+'</label>'+
@@ -86,7 +129,7 @@ const StrategyLab=(()=>{
      '<h2>Ronda '+r+' · '+safe(topic.title)+'</h2><p>'+safe(topic.purpose)+'</p>'+
      '<p class="muted">Avance: '+done+'/'+topic.fields.length+' apartados desarrollados. Las preguntas exigen justificar y aplicar los conceptos, no copiar definiciones.</p>'+
      (locked?'<p class="alert">Esta ronda está cerrada; puedes consultar tus respuestas, pero no modificarlas hasta la próxima ronda.</p>':'')+
-     '<form id="strategy-form">'+fieldset(topic,entry,locked,r)+(r===3?evidencePanel(team,entry,locked):'')+
+     '<form id="strategy-form">'+fieldset(topic,entry,locked,r)+(r===2?objectivesPanel(entry,locked):'')+(r===3?evidencePanel(team,entry,locked)+objectiveLinksPanel(team,entry,locked):'')+
      (locked?'':'<button type="submit">Guardar mi análisis estratégico</button>')+
      '<p id="strategy-save-feedback" aria-live="polite" class="muted"></p></form>'+
      '<div class="strategy-methods"><h3>Herramientas de decisión</h3><p class="muted">Utiliza las calculadoras para comprobar alternativas. Los resultados no sustituyen tu justificación.</p>'+
@@ -112,13 +155,33 @@ const StrategyLab=(()=>{
       form.onsubmit=async e=>{
        e.preventDefault();
        const button=form.querySelector('button[type="submit"]'),status=document.getElementById('strategy-save-feedback');
-       const input=new FormData(form);const entry=Object.fromEntries(roundName(game.round).fields.map(([k])=>[k,String(input.get(k)||'').trim()]));if(Number(game.round)===3){entry.competitiveChoice=String(input.get('competitiveChoice')||'');if(!StrategyEngine.names[entry.competitiveChoice]){status.textContent='Selecciona una estrategia competitiva válida.';return;}
+       const input=new FormData(form);const entry=Object.fromEntries(roundName(game.round).fields.map(([k])=>[k,String(input.get(k)||'').trim()]));
+       if(Number(game.round)===2){
+         entry.smartObjectives=[0,1].map(i=>({
+           title:String(input.get('objective_title_'+i)||'').trim(),
+           kind:String(input.get('objective_kind_'+i)||''),
+           metric:String(input.get('objective_metric_'+i)||''),
+           direction:String(input.get('objective_direction_'+i)||''),
+           target:String(input.get('objective_target_'+i)||'').trim(),
+           deadline:Number(input.get('objective_deadline_'+i)),
+           relevance:String(input.get('objective_relevance_'+i)||'').trim()
+         }));
+         const check=StrategyEngine.objectivesStatus({...team,strategy:{...(team.strategy||{}),'2':entry}});
+         if(!check.defined){status.textContent='Completa dos objetivos SMART: formulación, dimensión, indicador, valor, plazo y justificación de viabilidad.';return;}
+       }
+       if(Number(game.round)===3){entry.competitiveChoice=String(input.get('competitiveChoice')||'');if(!StrategyEngine.names[entry.competitiveChoice]){status.textContent='Selecciona una estrategia competitiva válida.';return;}
        entry.evidenceLinks=Object.fromEntries(StrategyEngine.evidenceDefinitions.map(spec=>[spec.key,{
          citation:String(input.get('evidence_cite_'+spec.key)||'').trim(),
          reasoning:String(input.get('evidence_reason_'+spec.key)||'').trim()
        }]));
        const audit=StrategyEngine.evidenceStatus({...team,strategy:{...(team.strategy||{}),'3':entry}});
        if(!audit.ready){status.textContent='Completa tres vínculos trazables con el Tema 2 y justifica cada uno con al menos 40 caracteres.';return;}
+       entry.objectiveLinks=[0,1].map(i=>({
+         action:String(input.get('objective_action_'+i)||'').trim(),
+         tradeoff:String(input.get('objective_tradeoff_'+i)||'').trim()
+       }));
+       const alignment=StrategyEngine.objectivesStatus({...team,strategy:{...(team.strategy||{}),'3':entry}});
+       if(!alignment.linked){status.textContent='Faltan los dos objetivos SMART de la ronda 2, o su relación con la estrategia y los conflictos de recursos.';return;}
        }
        button.disabled=true;status.textContent='Guardando en Supabase…';
        try{await CBCSync.rpc('cbc_save_strategy',{p_code:code,p_round:Number(game.round),p_entry:entry});
@@ -144,6 +207,23 @@ const StrategyLab=(()=>{
        '<p><b>Cita Tema 2:</b> '+safe(link.citation||'Sin referencia')+'</p>'+
        '<p><b>Justificación:</b> '+safe(link.reasoning||'Sin justificar')+'</p></div>';
      }).join(''):'')+
+       (r===2?StrategyEngine.objectivesStatus(t||{}).items.map((item,i)=>
+         '<div class="strategy-reviewed"><strong>Objetivo SMART '+(i+1)+'</strong>'+
+         '<p>'+safe(item.goal.title||'Sin definir')+'</p>'+
+         '<p>Tipo: '+safe(StrategyEngine.objectiveKinds[item.goal.kind]||'Sin definir')+
+         ' · Indicador: '+safe(item.metric?.label||'Sin definir')+
+         ' · Meta: '+safe(item.goal.target??'')+
+         ' · Ronda: '+safe(item.goal.deadline??'')+'</p>'+
+         '<p>Viabilidad: '+safe(item.goal.relevance||'Sin justificar')+'</p>'+
+         '<p>Verificación estructural: '+(item.defined?'completa':'pendiente')+'</p></div>').join(''):'')+
+       (r===3?StrategyEngine.objectivesStatus(t||{}).items.map((item,i)=>{
+         const link=entry.objectiveLinks?.[i]||{};
+         return '<div class="strategy-reviewed"><strong>Objetivo SMART '+(i+1)+' → estrategia</strong>'+
+         '<p>'+safe(item.goal.title||'No definido')+'</p>'+
+         '<p>Acciones: '+safe(link.action||'Sin justificar')+'</p>'+
+         '<p>Conflictos: '+safe(link.tradeoff||'Sin analizar')+'</p>'+
+         '<p>Vinculación: '+(item.linked?'documentada':'incompleta')+'</p></div>';
+        }).join(''):'')+
        topic.fields.map(([key,label])=>'<div class="strategy-reviewed"><strong>'+safe(label)+'</strong><p>'+safe(entry[key]||'Sin entregar')+'</p></div>').join('');
     };
     selector.onchange=render;round.onchange=render;render();
