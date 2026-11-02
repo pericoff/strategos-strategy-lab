@@ -15,6 +15,20 @@ Aplicación web independiente para utilizar en docencia los **Temas 2, 3, 4 y 5*
 - El motor económico heredado y la ponderación **80 % simulación / 20 % Canvas** se mantienen provisionalmente. Las fichas estratégicas se revisan de forma formativa y no alteran automáticamente la nota; diseñar un baremo estratégico específico es una fase posterior.
 - **Los enlaces a los cinco vídeos de STRATEGOS IA no se han copiado**; se pueden producir nuevos vídeos específicos de los cuatro temas.
 
+## Motor competitivo del Tema 4 (implementado)
+
+Desde la **ronda 3** cada equipo debe escoger y justificar una de las siguientes estrategias en **Plan estratégico** antes de enviar decisiones. La elección se mantiene para las rondas 3 y 4.
+
+- **Liderazgo en costes**: la utilización de capacidad, la inversión productiva y el precio refuerzan la eficiencia; el coste variable se reduce dentro de límites.
+- **Diferenciación**: invertir en I+D y comercialización aumenta el atractivo y el valor percibido, a cambio de un coste unitario superior.
+- **Enfoque / segmentación**: la especialización en I+D y marketing mejora la atracción de un nicho, con un límite explícito del **22 %** de demanda del mercado por ronda.
+- **Coherencia**: se genera un indicador explicativo (0–100) calculado con reglas deterministas, visible en los resultados y en el panel del profesor. No determina por sí solo la calificación.
+- **Puntuación**: se mantiene la distribución pedagógica actual del simulador, pero se amplía el rango normalizado de rentabilidad para evitar saturación prematura. Las distintas estrategias tienen efectos a través de los costes, las ventas y los resultados reales simulados.
+
+Los coeficientes son **hipótesis didácticas** del modelo, no estimaciones empíricas del sector industrial. No existe estrategia universalmente vencedora. El motor económico y los resultados de STRATEGOS IA original no cambian.
+
+**No se requiere SQL adicional** para este cambio: la ficha de estrategia ya utiliza la RPC `ssl_save_strategy` del proyecto compartido. Conviene probarlo con una partida nueva antes de usarlo en el aula.
+
 ## Contenidos docentes incluidos
 
 | Ronda | Tema | Actividades |
