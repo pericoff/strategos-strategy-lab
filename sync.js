@@ -1,11 +1,11 @@
 /* Sincronización Supabase: no se usan claves privadas en el navegador. */
 const CBCSync = (() => {
- const base=''; // Supabase NUEVO de STRATEGY LAB, nunca el de STRATEGOS IA. // URL del NUEVO proyecto Supabase de STRATEGOS IA.
- const key=''; // Clave pública del proyecto independiente.
+ const base='https://syewhwkgccavsalzbekm.supabase.co'; // Proyecto compartido, recursos ssl_* separados.
+ const key='sb_publishable_y2KJiW4b3o8UHesC8u3ODQ_-haX0wTM'; // Clave PÚBLICA del proyecto compartido.
  const store='strategy_lab_teacher_session_v1';
  let session=null;
  try { session=JSON.parse(sessionStorage.getItem(store)||'null'); } catch {}
- function checkSetup(){if(!base||!key)throw Error('STRATEGY LAB: configura un proyecto Supabase independiente en sync.js.');}
+ function checkSetup(){if(!base||!key)throw Error('STRATEGY LAB: configura la conexión a Supabase.');}
  function currentToken(){return session?.access_token||null}
  async function refreshAuth(){
    checkSetup();
@@ -18,6 +18,9 @@ const CBCSync = (() => {
    session=data;sessionStorage.setItem(store,JSON.stringify(session));return session;
  }
  async function rpc(name, params={}, retried=false){
+   // Ningún acceso del laboratorio puede usar las RPC cbc_* de STRATEGOS IA.
+   if(!/^cbc_[a-z_]+$/.test(name))throw Error('Nombre RPC no permitido');
+   name='ssl_'+name.slice(4);
    checkSetup();
    const headers={'apikey':key,'Content-Type':'application/json'};
    if(currentToken())headers.Authorization='Bearer '+currentToken();
@@ -46,7 +49,7 @@ const CBCSync = (() => {
  }
  async function advisor(code,question){
    checkSetup();
-   const response=await fetch(base+'/functions/v1/strategos-advisor',{
+   const response=await fetch(base+'/functions/v1/strategy-lab-advisor',{
      method:'POST',headers:{'apikey':key,'Content-Type':'application/json'},
      body:JSON.stringify({code,question})
    }).catch(()=>{throw Error('No se pudo contactar con el asesor.');});
